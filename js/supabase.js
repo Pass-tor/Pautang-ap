@@ -1,8 +1,6 @@
-
-// Supabase client - use public anon key only
-// Replace with your project values in supabase.js
-const SUPABASE_URL = localStorage.getItem('SUPABASE_URL') || 'https://dljztbyrwwlxazpxnxoa.supabase.co/rest/v1/';
-const SUPABASE_ANON_KEY = localStorage.getItem('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsanp0Ynlyd3dseGF6cHhueG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NDcxMzYsImV4cCI6MjEwMzQyMzEzNn0.YBEVngiC0FJusCJldkUI7qmeThvYkwW00Ch3sOgov2U';
+// Supabase client - HARDCODED for Chibee Lending - production ready
+const SUPABASE_URL = 'https://dljztbyrwwlxazpxnxoa.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_7UQrDW6gwlETRXKFSuDnCQ_ylPFTSs-';
 
 let supabaseClient = null;
 function getSupabase(){
@@ -14,7 +12,6 @@ function getSupabase(){
   throw new Error('Supabase SDK not loaded');
 }
 
-// helpers
 const peso = (n) => {
   const num = Number(n||0);
   return '₱' + num.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
