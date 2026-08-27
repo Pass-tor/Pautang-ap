@@ -1,7 +1,7 @@
 
 // Supabase client - use public anon key only
 // Replace with your project values in supabase.js
-const SUPABASE_URL = localStorage.getItem('SUPABASE_URL') || 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_URL = localStorage.getItem('SUPABASE_URL') || 'https://dljztbyrwwlxazpxnxoa.supabase.co/rest/v1/';
 const SUPABASE_ANON_KEY = localStorage.getItem('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsanp0Ynlyd3dseGF6cHhueG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NDcxMzYsImV4cCI6MjEwMzQyMzEzNn0.YBEVngiC0FJusCJldkUI7qmeThvYkwW00Ch3sOgov2U';
 
 let supabaseClient = null;
