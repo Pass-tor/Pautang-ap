@@ -46,3 +46,42 @@ table{width:100%; border-collapse:collapse; font-size:14px} th,td{padding:12px; 
 .footer-credit{font-size:11px; color:var(--muted); text-align:center; padding:16px}
 .link{color:var(--primary); font-weight:600}
 .auth-wrap{max-width:420px; margin:48px auto}
+
+
+/* --- MOBILE MODAL FIX - FORCE SCROLL --- */
+.modal-backdrop{
+  position:fixed !important;
+  inset:0 !important;
+  background:rgba(2,6,23,.75) !important;
+  display:none;
+  z-index:9999 !important;
+  padding:10px !important;
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch !important;
+}
+.modal-backdrop[style*="display: grid"], .modal-backdrop[style*="display: flex"], .modal-backdrop.open{ display:flex !important; align-items:flex-start !important; justify-content:center !important; }
+.modal{
+  background:var(--card) !important;
+  width:100% !important;
+  max-width:520px !important;
+  max-height:90vh !important;
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch !important;
+  border-radius:16px !important;
+  margin:20px auto !important;
+  padding-bottom:80px !important;
+}
+@media(max-width:640px){
+  .modal{ max-height:88vh !important; margin:10px auto !important; }
+  .modal .sticky-actions, .modal div[style*="display:flex; gap:8px"]{
+    position:sticky !important;
+    bottom:0 !important;
+    background:var(--card) !important;
+    padding:14px 0 10px !important;
+    margin-top:16px !important;
+    border-top:1px solid var(--border) !important;
+    z-index:10 !important;
+  }
+  .modal .sticky-actions .btn, .modal div[style*="display:flex; gap:8px"] .btn{ flex:1 !important; min-height:48px !important; }
+}
+body.modal-open{ overflow:hidden !important; }
