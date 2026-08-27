@@ -1,0 +1,35 @@
+<!doctype html><html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login - LendManager</title><link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head><body>
+<div class="container auth-wrap">
+  <div class="card">
+    <h2 style="margin:0 0 6px">Welcome back</h2><p style="color:var(--muted); margin:0 0 16px">Login to your lending system</p>
+    <form onsubmit="handleLogin(event)" class="grid">
+      <div><label class="label">Email</label><input id="email" class="input" type="email" required></div>
+      <div><label class="label">Password</label><input id="password" class="input" type="password" required></div>
+      <button class="btn primary" type="submit">Login</button>
+    </form>
+    <div style="margin-top:12px; display:flex; justify-content:space-between; font-size:13px">
+      <a class="link" href="register.html">Create account</a><a class="link" href="#" onclick="document.getElementById('forgot').style.display='block'; return false">Forgot password?</a>
+    </div>
+    <div id="forgot" style="display:none; margin-top:16px; border-top:1px solid var(--border); padding-top:12px">
+      <form onsubmit="handleForgot(event)" class="grid">
+        <label class="label">Reset email</label><input id="email" class="input" type="email" required>
+        <button class="btn" type="submit">Send reset link</button>
+      </form>
+    </div>
+    <div style="margin-top:16px"><label class="label">Supabase Config (for GitHub Pages)</label>
+      <input id="cfgUrl" class="input" placeholder="https://...supabase.co" style="margin-bottom:6px">
+      <input id="cfgKey" class="input" placeholder="anon public key">
+      <button class="btn sm" onclick="localStorage.setItem('SUPABASE_URL',document.getElementById('cfgUrl').value); localStorage.setItem('SUPABASE_ANON_KEY',document.getElementById('cfgKey').value); toast('Saved, reloading'); setTimeout(()=>location.reload(),600)">Save Config</button>
+      <p style="font-size:11px; color:var(--muted)">Stored locally only. Never use service_role key.</p>
+    </div>
+  </div>
+  <div class="footer-credit">System by Edwin Macatangay Perez</div>
+</div>
+<div id="toast" class="toast"></div>
+<script src="js/supabase.js"></script><script src="js/auth.js"></script>
+<script>initAuthPage(); document.getElementById('cfgUrl').value=localStorage.getItem('SUPABASE_URL')||''; document.getElementById('cfgKey').value=localStorage.getItem('SUPABASE_ANON_KEY')||'';</script>
+</body></html>

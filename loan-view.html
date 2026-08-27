@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loan Details - LendManager</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head><body>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div style="font-weight:800; font-size:18px; margin:8px 0 16px">💰 LendManager</div>
+        <div class="grid">
+          <a class="btn ghost" href="dashboard.html">📊 Dashboard</a>
+          <a class="btn ghost" href="borrowers.html">👥 Borrowers</a>
+          <a class="btn primary" href="loans.html">📄 Loans</a>
+          <a class="btn ghost" href="due-payments.html">⏰ Due Payments</a>
+          <a class="btn ghost" href="payments.html">💵 Payments</a>
+          <a class="btn ghost" href="reports.html">📈 Reports</a>
+          <a class="btn ghost" href="settings.html">⚙️ Settings</a>
+          <button class="btn ghost" onclick="logout()">🚪 Logout</button>
+        </div>
+        <div class="footer-credit">System by Edwin Macatangay Perez</div>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <div style="font-weight:700">Loan Details</div>
+          <div id="userEmail" style="font-size:12px; color:var(--muted)"></div>
+        </div>
+        <div class="container">
+<div id="loanInfo" class="card"></div>
+<div class="card" style="margin-top:12px"><div style="display:flex; justify-content:space-between; align-items:center"><h4 style="margin:0">Payment Schedule</h4><button class="btn sm primary" id="payBtn">Record Payment</button></div><div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>#</th><th>Due Date</th><th>Expected</th><th>Paid</th><th>Remaining</th><th>Status</th><th>SMS</th></tr></thead><tbody id="scheduleBody"></tbody></table></div></div>
+<div class="card" style="margin-top:12px"><h4>Payments</h4><div id="paymentsList"></div></div>
+<script src="js/payments.js"></script>
+<script>
+async function loadLoanView(){
+  const sess=await requireAuth(); if(!sess) return;
+  document.getElementById('userEmail').textContent=sess.user.email;
+  const id=new URLSearchParams(location.search).get('id');
+  const supa=getSupabase();
+  const {data:loan}=await supa.from('loans').select('*, borrowers(*)').eq('id', id).single();
+  document.getElementById('loanInfo').innerHTML=`<h3>Loan ${loan.id.slice(0,8)} - ${loan.borrowers?.full_name}</h3>
+    <div class="grid grid-3"><div>Principal: <b>${peso(loan.principal)}</b></div><div>Rate: <b>${loan.interest_rate}%</b></div><div>Interest: <b>${peso(loan.interest_amount)}</b></div><div>Total: <b>${peso(loan.total_payable)}</b></div><div>Remaining: <b>${peso(loan.remaining_balance)}</b></div><div>Status: <span class="badge">${loan.status}</span></div></div>
+    <div style="margin-top:8px; font-size:13px; color:var(--muted)">Start: ${loan.start_date} • ${loan.payment_frequency} • ${loan.duration_months} months • ${loan.num_payments} payments x ${peso(loan.payment_amount)}</div>`;
+  const {data:sched}=await supa.from('payment_schedules').select('*').eq('loan_id', id).order('payment_number');
+  document.getElementById('scheduleBody').innerHTML=sched.map(s=>`<tr><td>${s.payment_number}</td><td>${s.due_date}</td><td>${peso(s.expected_amount)}</td><td>${peso(s.amount_paid)}</td><td>${peso(s.remaining_amount)}</td><td><span class="badge ${s.status==='Paid'?'success':s.status==='Overdue'?'danger':s.status==='Due Today'?'warn':'info'}">${s.status}</span></td><td><button class="btn sm" onclick="sendSMS('${s.id}')">SMS</button></td></tr>`).join('');
+  const {data:pays}=await supa.from('payments').select('*').eq('loan_id', id).order('payment_date',{ascending:false});
+  document.getElementById('paymentsList').innerHTML=(pays||[]).map(p=>`<div style="font-size:13px; padding:6px 0; border-bottom:1px solid var(--border)">${fmtDate(p.payment_date)} - ${peso(p.amount_paid)} - ${p.payment_method} - ${p.reference_number||''}</div>`).join('')||'<div class="empty">No payments yet</div>';
+  document.getElementById('payBtn').onclick=()=>{ openPaymentModal(id); };
+  // need openPaymentModal from loans.js
+  const script=document.createElement('script'); script.src='js/loans.js'; document.body.appendChild(script);
+}
+function openPaymentModal(loanId){ // fallback if loans.js not loaded yet
+  location.href='loans.html';
+}
+document.addEventListener('DOMContentLoaded', loadLoanView);
+</script>
+</div>
+        <div class="footer-credit">System by Edwin Macatangay Perez</div>
+      </div>
+    </div>
+    <nav class="bottom-nav">
+      <div class="nav-grid">
+        <a href="dashboard.html">📊<span>Dash</span></a>
+        <a href="borrowers.html">👥<span>Borrow</span></a>
+        <a href="loans.html">📄<span>Loans</span></a>
+        <a href="due-payments.html">⏰<span>Due</span></a>
+        <a href="settings.html">⚙️<span>Set</span></a>
+      </div>
+    </nav>
+    
+<div id="toast" class="toast"></div>
+<div id="modal" class="modal-backdrop"><div class="modal" id="modalBox"></div></div>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+</body></html>
