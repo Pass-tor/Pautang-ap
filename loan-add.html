@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en"><head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover">
+<title>Add Loan - Chibee Lending</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{background:var(--bg)}
+.mobile-page{max-width:520px; margin:0 auto; background:var(--card); min-height:100vh; padding:16px; padding-bottom:120px}
+@media(min-width:641px){ .mobile-page{border-radius:20px; margin:20px auto; min-height:auto; box-shadow:var(--shadow); border:1px solid var(--border)} }
+.sticky-footer{position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border); padding:12px 16px; padding-bottom:calc(12px + env(safe-area-inset-bottom)); display:flex; gap:10px; z-index:50; max-width:520px; margin:0 auto}
+@media(min-width:641px){ .sticky-footer{position:sticky; bottom:0; border-radius:0 0 20px 20px} }
+</style>
+</head><body>
+<div class="mobile-page">
+<div style="display:flex; align-items:center; gap:12px; margin-bottom:16px">
+<a href="loans.html" class="btn sm">← Back</a>
+<h2 style="margin:0">Add Loan</h2>
+</div>
+
+<form id="loanForm" class="grid" style="gap:12px">
+  <div><label class="label">Borrower *</label><select id="borrower_id" class="select" required><option value="">Loading borrowers...</option></select></div>
+  <div class="grid grid-2">
+    <div><label class="label">Principal (₱) *</label><input id="principal" class="input" type="number" step="0.01" min="1" required placeholder="1000" inputmode="numeric"></div>
+    <div><label class="label">Interest Rate % *</label><input id="interest_rate" class="input" type="number" step="0.01" min="0" required placeholder="5" value="5" inputmode="decimal"></div>
+  </div>
+  <div class="grid grid-2">
+    <div><label class="label">Duration</label><select id="duration" class="select"><option value="1">1 month</option><option value="2">2 months</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select></div>
+    <div><label class="label">Frequency</label><select id="frequency" class="select"><option>Weekly</option><option>Twice a Month</option><option>Monthly</option></select></div>
+  </div>
+  <div class="grid grid-2">
+    <div><label class="label">Start Date *</label><input id="start_date" class="input" type="date" required></div>
+    <div><label class="label">Processing Fee</label><input id="fee" class="input" type="number" value="0" min="0"></div>
+  </div>
+  <div><label class="label">Notes</label><textarea id="notes" class="textarea" rows="2" placeholder="Optional"></textarea></div>
+  
+  <div id="summary" class="card" style="background:#f8fafc; border:1px dashed var(--border); font-size:13px; line-height:1.6">
+    <div style="font-weight:700">Loan Summary</div>
+    <div style="color:var(--muted)">Fill principal and interest to see computation</div>
+  </div>
+  
+  <div style="height:80px"></div>
+</form>
+</div>
+
+<div class="sticky-footer">
+  <a href="loans.html" class="btn" style="flex:1; min-height:52px; display:grid; place-items:center">Cancel</a>
+  <button form="loanForm" class="btn primary" type="submit" style="flex:2; min-height:52px; font-size:16px; font-weight:700">💾 Save Loan</button>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script>
+// same logic as loans.js but for this page
+function calculateLoan(principal, rate, durationMonths, freq, processingFee=0){
+  principal=Number(principal); rate=Number(rate); processingFee=Number(processingFee||0);
+  const interestAmount = +(principal * rate / 100).toFixed(2);
+  const total = +(principal + interestAmount + processingFee).toFixed(2);
+  let numPayments=0;
+  if(freq==='Monthly') numPayments=durationMonths;
+  else if(freq==='Twice a Month') numPayments=durationMonths*2;
+  else if(freq==='Weekly') numPayments=durationMonths*4;
+  const paymentAmount = +(total/numPayments).toFixed(2);
+  return {interestAmount, totalPayable:total, numPayments, paymentAmount};
+}
+function generateSchedule(startDate, numPayments, freq, paymentAmount, totalPayable){
+  const schedules=[]; let due=new Date(startDate); let remaining=totalPayable;
+  for(let i=1;i<=numPayments;i++){
+    let dueDate = i===1 ? new Date(due) : new Date(due);
+    if(i>1){
+      if(freq==='Monthly') dueDate.setMonth(dueDate.getMonth()+1);
+      else if(freq==='Twice a Month') dueDate.setDate(dueDate.getDate()+15);
+      else dueDate.setDate(dueDate.getDate()+7);
+      due=dueDate;
+    }
+    let exp = i===numPayments ? +remaining.toFixed(2) : paymentAmount;
+    remaining=+(remaining-exp).toFixed(2); if(remaining<0) remaining=0;
+    schedules.push({payment_number:i, due_date:dueDate.toISOString().slice(0,10), expected_amount:exp, remaining_amount:exp, status: dueDate.toISOString().slice(0,10)===todayStr()?'Due Today':'Upcoming'});
+  }
+  return schedules;
+}
+async function loadBorrowers(){
+  const sess=await requireAuth(); if(!sess) return;
+  const supa=getSupabase();
+  const bRes=await supa.from('borrowers').select('id,full_name').eq('user_id', sess.user.id);
+  const sel=document.getElementById('borrower_id');
+  sel.innerHTML='<option value="">Select borrower</option>'+(bRes.data||[]).map(b=>`<option value="${b.id}">${b.full_name}</option>`).join('');
+  const prof=await supa.from('profiles').select('default_interest_rate').eq('id', sess.user.id).single();
+  if(prof.data) document.getElementById('interest_rate').value=prof.data.default_interest_rate||5;
+}
+function updateSummary(){
+  const p=Number(document.getElementById('principal').value||0);
+  const r=Number(document.getElementById('interest_rate').value||0);
+  const d=parseInt(document.getElementById('duration').value)||1;
+  const f=document.getElementById('frequency').value;
+  const fee=Number(document.getElementById('fee').value||0);
+  const calc=calculateLoan(p,r,d,f,fee);
+  document.getElementById('summary').innerHTML=`<div style="font-weight:700; margin-bottom:4px">Loan Summary</div>
+  Interest: <b>${peso(calc.interestAmount)}</b> (${r}%)<br>
+  Total Payable: <b style="color:var(--primary)">${peso(calc.totalPayable)}</b><br>
+  ${calc.numPayments} payments x ${peso(calc.paymentAmount)} (${f})`;
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  loadBorrowers();
+  document.getElementById('start_date').value=todayStr();
+  ['principal','interest_rate','duration','frequency','fee'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', updateSummary);
+    document.getElementById(id).addEventListener('change', updateSummary);
+  });
+  updateSummary();
+  document.getElementById('loanForm').onsubmit=async (e)=>{
+    e.preventDefault();
+    const borrower_id=document.getElementById('borrower_id').value;
+    if(!borrower_id){ toast('Select borrower first'); return; }
+    const principal=Number(document.getElementById('principal').value);
+    const interest_rate=Number(document.getElementById('interest_rate').value);
+    const duration_months=parseInt(document.getElementById('duration').value);
+    const payment_frequency=document.getElementById('frequency').value;
+    const start_date=document.getElementById('start_date').value;
+    const processing_fee=Number(document.getElementById('fee').value||0);
+    const notes=document.getElementById('notes').value;
+    const calc=calculateLoan(principal, interest_rate, duration_months, payment_frequency, processing_fee);
+    const supa=getSupabase();
+    const {data:{user}}=await supa.auth.getUser();
+    const {data:loan, error}=await supa.from('loans').insert({
+      user_id:user.id, borrower_id, principal, interest_rate, interest_amount:calc.interestAmount, total_payable:calc.totalPayable,
+      processing_fee, duration_months, start_date, payment_frequency, num_payments:calc.numPayments, payment_amount:calc.paymentAmount,
+      remaining_balance:calc.totalPayable, status:'Active', notes
+    }).select().single();
+    if(error){ toast(error.message); return; }
+    const schedules=generateSchedule(start_date, calc.numPayments, payment_frequency, calc.paymentAmount, calc.totalPayable).map(s=>({...s, user_id:user.id, loan_id:loan.id, amount_paid:0}));
+    await supa.from('payment_schedules').insert(schedules);
+    toast('Loan created! Redirecting...'); setTimeout(()=> location.href='loans.html', 800);
+  };
+});
+</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body></html>
