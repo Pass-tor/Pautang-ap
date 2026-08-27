@@ -36,8 +36,9 @@ table{width:100%; border-collapse:collapse; font-size:14px} th,td{padding:12px; 
 .bottom-nav a{padding:10px 4px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px}
 @media(max-width:900px){ .sidebar{display:none} .bottom-nav{display:block} .main{padding-bottom:80px} }
 .topbar{position:sticky; top:0; z-index:20; backdrop-filter:blur(12px); background:color-mix(in srgb, var(--bg) 80%, transparent); border-bottom:1px solid var(--border); padding:10px 16px; display:flex; justify-content:space-between; align-items:center}
-.modal-backdrop{position:fixed; inset:0; background:rgba(2,6,23,.5); display:none; place-items:center; z-index:50; padding:16px}
-.modal{background:var(--card); border-radius:20px; border:1px solid var(--border); max-width:560px; width:100%; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-backdrop{position:fixed; inset:0; background:rgba(2,6,23,.65); display:none; place-items:start center; z-index:50; padding:12px; overflow-y:auto; -webkit-overflow-scrolling:touch}
+.modal{background:var(--card); border-radius:20px; border:1px solid var(--border); max-width:560px; width:100%; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.25); max-height:90vh; overflow-y:auto; margin:auto}
+@media(max-width:640px){ .modal-backdrop{padding:8px; align-items:start} .modal{max-height:92vh; border-radius:16px; padding:14px} .modal .sticky-actions{position:sticky; bottom:-14px; background:var(--card); padding:12px 0; margin-top:12px; border-top:1px solid var(--border); z-index:2} }
 .toast{position:fixed; bottom:88px; left:50%; transform:translateX(-50%); background:#0f172a; color:white; padding:10px 14px; border-radius:999px; font-size:13px; display:none; z-index:80}
 .empty{padding:28px; text-align:center; color:var(--muted)} .empty .big{font-size:28px; margin-bottom:8px}
 .chart{height:180px; display:grid; align-items:end; grid-auto-flow:column; gap:6px}
