@@ -102,8 +102,8 @@ function openLoanModal(){
       <div><label class="label">Processing Fee (optional)</label><input id="fee" class="input" type="number" step="0.01" min="0" value="0"></div>
     </div>
     <div><label class="label">Notes</label><textarea id="notes" class="textarea"></textarea></div>
-    <div id="summary" class="card" style="background:color-mix(in srgb, var(--card) 80%, var(--bg))"></div>
-    <div style="display:flex; gap:8px"><button class="btn primary" type="submit">Save Loan</button><button type="button" class="btn" onclick="closeModal()">Cancel</button></div>
+    <div id="summary" class="card" style="background:color-mix(in srgb, var(--card) 80%, var(--bg)); position:sticky; top:0; z-index:1"></div>
+    <div class="sticky-actions" style="display:flex; gap:8px"><button class="btn primary" type="submit" style="flex:1">Save Loan</button><button type="button" class="btn" onclick="closeModal()" style="flex:1">Cancel</button></div>
   </form>`;
   document.getElementById('modal').style.display='grid';
   populateBorrowerSelect();
